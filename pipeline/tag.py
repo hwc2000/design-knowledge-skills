@@ -1,25 +1,8 @@
-"""분산처리 지식트리 주제 → 설계 질문 태그. U=단원 기본값, OV=주제 이름 키워드 덮어쓰기.
-새 강의(20강~)를 넣으면 U 에 그 강의 단원 태그 목록을 추가한다."""
+"""지식트리 주제 → 설계 질문 태그.
+- 주 태그: 과목 설정(subjects/<과목>.json)의 단원별 tags 가 기본값, OV(주제 이름 낱말)가 덮어쓴다.
+- 보조 태그: SEE(주제 이름 낱말 → 태그 목록). 다른 스킬에 링크만 남긴다.
+OV·SEE 는 과목과 상관없이 모든 주제에 똑같이 걸린다. 새 규칙은 기존 주제를 먼저 검색하고 좁게 쓴다."""
 import json, re, sys, collections
-U={  # 강: 단원 순서대로 기본 태그
- 3:['일관성','일관성','일관성','배경','일관성','배경'],
- 4:['구조']*5,
- 5:['통신','통신','통신','통신','통신','통신','통신','구조','구조'],
- 6:['구조','구조','구조','찾기','찾기','구조','배경','구조'],
- 7:['분할']*8+['배경'],
- 8:['통신','통신','통신','배경','통신','통신','통신','성능','성능','성능','통신'],
- 9:['통신']*7+['통신','통신','장애','통신'],
- 10:['성능','성능','성능','성능','조정','통신','성능','배경'],
- 11:['찾기'], 12:['순서'],
- 13:['배경','순서','순서','충돌','순서','순서','순서'],
- 14:['조정']*8+['배경'],
- 15:['조정','조정','장애','장애','장애','장애','장애','조정','조정'],
- 16:['복제','복제','일관성','일관성','일관성','일관성','일관성','일관성','일관성'],
- 17:['일관성']*7,
- 18:['충돌','충돌','충돌','복제','충돌','충돌','충돌'],
- 19:['복제','복제','복제','복제','복제','일관성','복제','복제'],
- 20:['배경','복제','복제','장애','일관성','복제','복제'],
-}
 OV=[  # 주제 이름 키워드 → 태그 (단원 기본값보다 우선)
  (r'다음 강의|오늘의 정리|오늘 정리|오늘 잡은|오늘의 핵심|마지막 한 줄|핵심 한 줄씩|^역사$|지난 시간|^결국, |오늘의 5가지|세 갈래 한 줄|통신은 계층으로|세 묶음으로 본 계층','배경'),
  (r'페일오버|SPOF|장애로 보면|토큰을 잃어버리면|타임아웃으로 정리|코디네이터가 죽으면','장애'),
@@ -73,22 +56,23 @@ def extras(title):
         if re.search(pat,title):
             out+=[t for t in tgs if t not in out]
     return out
-def tag(lec,ui,t):
+def tag(unit_tag,t):
+    """unit_tag: 이 주제가 속한 단원의 기본 태그 (과목 설정의 tags[단원 순서])."""
     for pat,tg in OV:
         if re.search(pat,t): return tg
-    return U[lec][ui]
+    return unit_tag
 def main():
     data=json.load(open(sys.argv[1]))
     cnt=collections.Counter(); where=collections.defaultdict(set); out=[]
     for x in data:
-        out.append(f"\n## {x['lec']}강 · {x['title']}\n\n{'https://claude.ai/artifact/'+x['id']}\n")
+        out.append(f"\n## {x['title']}\n\n{'https://claude.ai/artifact/'+x['id']}\n")
         for ui,(u,ts) in enumerate(x['units']):
             if u: out.append(f"\n**{u}**\n")
             if not ts: ts=[u]
             for t in ts:
+                t=t[0] if isinstance(t,list) else t
                 t=re.sub(r'\s*p\.\d[\d–·, ]*$','',re.sub(r' · p\.\d[\d–]*$','',t)).strip()
-                t=re.sub(r'([가-힣a-z)])([A-Z][a-z])',r'\1 \2',t) if x['lec']==4 else t
-                g=tag(x['lec'],ui,t); cnt[g]+=1; where[g].add(x['lec'])
+                g=tag(x['tags'][ui],t); cnt[g]+=1; where[g].add(x['title'][:20])
                 out.append(f"- {t} `{g}`")
     open(sys.argv[2],'w').write('\n'.join(out)+'\n')
     for g,c in cnt.most_common(): print(g,c,sorted(where[g]))

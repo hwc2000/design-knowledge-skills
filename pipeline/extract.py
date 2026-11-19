@@ -1,15 +1,12 @@
-import sys, re, json
-sys.path.insert(0, sys.argv[1]); import mdom
+"""지식트리 페이지(HTML)에서 단원·주제·본문을 뽑는다.
+사용: python3 -I extract.py <subjects/과목.json> <HTML폴더> <out.json> [아티팩트id ...]
+- HTML폴더에 <아티팩트id>.html 이 있어야 한다. JS 로 트리를 그리는 예전 페이지는 렌더링한 DOM 을 저장해 둔다.
+- 끝에 아티팩트 id 를 주면 그 강의만 뽑는다."""
+import sys, re, json, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import mdom
 from mdom import N
-domdir = sys.argv[2]
-LECS = [  # (강, artifact id, 제목)
- (3,'Bg5WhkJ4idvTrfQ2SsiqUg'),(4,'QwCM4qtdoXZbZmmNXHgoPs'),(5,'RA2YhCJaEDmRsLF8rYT7Ye'),
- (6,'Te72duyPPXPpH3JbBdzwqB'),(7,'Rkpkpn5PbgjzDQnD8PFqR4'),(8,'9oFpLeELxu7Tedc4DHDaPG'),
- (9,'QhYYvWwXV6FfRG8EjZPxjv'),(10,'UG5scDYMFGMJhPZvXsTN5G'),(11,'RDuCiM4CqVqMWcrDs27ZNM'),
- (12,'BJjr84mo2es6mijNkb7a1n'),(13,'7pYSaWXBnfCakdvqfhmrv3'),(14,'7GR1dCizEscQhtDEu2FMAQ'),
- (15,'98yMwHp9oryT324QExrxTz'),(16,'H5qm1FotEVkhLGBKVenH2X'),(17,'8jWAxMXJjfCsMfbHfK8B3h'),
- (18,'FE3gHyKujLcFr5QEb4o5Hs'),(19,'VdxtuaCtYnHR39YTQc8Cdt'),(20,'D4TqtNACat7ZFbx6TpQmST')]
-ONLY={int(a) for a in sys.argv[4:]}  # 강 번호를 주면 그 강의만 뽑는다 (예: ... out.json 20)
+CFG = json.load(open(sys.argv[1])); domdir = sys.argv[2]
+ONLY = set(sys.argv[4:])
 BLOCK={'div','p','li','td','th','tr','h1','h2','h3','h4','br','ul','ol','summary','details','section','table','pre','dd','dt'}
 def txt(n, keep_btn=False, drop=()):
     out=[]
@@ -76,12 +73,15 @@ def extract(r):
     if not units:
         units=[('',[(t,b) for t,b in h2chunks(r) if not re.search('퀴즈|연습',t)])]
     return units
-res=[]
-for lec,aid in LECS:
-    if ONLY and lec not in ONLY: continue
-    r=mdom.parse(f'{domdir}/{aid}.html')
+res=[]; bad=[]
+for i, L in enumerate(CFG['lectures']):
+    if ONLY and L['id'] not in ONLY: continue
+    r=mdom.parse(f"{domdir}/{L['id']}.html")
     title=txt(first(r,lambda n:n.tag=='title'))
     h1=first(r,lambda n:n.tag=='h1')
-    res.append({'lec':lec,'id':aid,'title':title,'h1':txt(h1) if h1 else title,'units':extract(r)})
+    units=extract(r)
+    if len(units)!=len(L['tags']): bad.append(f"{title}: 단원 {len(units)}개인데 tags {len(L['tags'])}개")
+    res.append({'subject':CFG['subject'],'order':i+1,'lec':L.get('lec'),'id':L['id'],'title':title,'h1':txt(h1) if h1 else title,'units':units,'tags':L['tags']})
 json.dump(res,open(sys.argv[3],'w'),ensure_ascii=False,indent=1)
-for x in res: print(x['lec'], '단원',len(x['units']), '주제',sum(len(t) for _,t in x['units']), '본문자수',sum(len(b) for _,ts in x['units'] for tp in ts for b in [tp[1]]), '빈본문',sum(1 for _,ts in x['units'] for tp in ts if len(tp[1])<40))
+for x in res: print(x['title'][:30], '단원',len(x['units']), '주제',sum(len(t) for _,t in x['units']), '본문자수',sum(len(tp[1]) for _,ts in x['units'] for tp in ts), '빈본문',sum(1 for _,ts in x['units'] for tp in ts if len(tp[1])<40))
+if bad: sys.exit('PROBLEM 단원 수와 tags 수가 다르다:\n' + '\n'.join(bad))

@@ -5,7 +5,8 @@
   python3 -I build_skills.py --links-only [스킬폴더]     # 보조 태그 링크와 목록만 다시 만든다
 
 - 한 과목의 자료는 각 스킬의 references/<과목이름>/ 아래에만 쓴다.
-  JSON 에 들어 있는 강의의 파일만 지우고 다시 쓴다. 다른 강의·다른 과목 파일은 그대로 둔다(강의 하나씩 추가 가능).
+  JSON 에 들어 있는 강의의 파일(출처 아티팩트 id 로 찾음)만 지우고 다시 쓴다. 다른 강의·다른 과목 파일은 그대로 둔다.
+- 강의 번호(lec)는 선택이다. 있으면 파일 이름 앞에 NN강- 을 붙이고, 없으면 제목만 쓴다.
 - 주제 본문은 주 태그 스킬 한 곳에만 둔다. 보조 태그(tag.SEE)는 다른 스킬의 references/관련-주제.md 에 한 줄 링크로만 남긴다.
   링크는 references 전체를 훑어 매번 새로 만들므로 본문과 어긋나지 않는다.
 - SKILL.md 의 <!-- INDEX --> ~ <!-- /INDEX --> 구간은 references 폴더 전체(모든 과목)를 훑어 다시 만든다.
@@ -54,30 +55,31 @@ def compact(title, body, gist):
 def build(data, subject, root):
     files = {}  # (skill, filename) -> lines
     for x in data:
-        lec, url = x['lec'], 'https://claude.ai/artifact/' + x['id']
-        fname = f"{lec:02d}강-{slug(x.get('h1') or x['title'])}.md"
+        lec, url = x.get('lec'), 'https://claude.ai/artifact/' + x['id']
+        fname = (f"{lec:02d}강-" if lec else '') + f"{slug(x.get('h1') or x['title'])}.md"
         for ui, (unit, topics) in enumerate(x['units']):
             for tp in topics:
                 title, body = tp[0], tp[1]
                 gist = tp[2] if len(tp) > 2 else ''
                 title = clean(title)
-                skill = SKILL_OF.get(tagger.tag(lec, ui, title))
+                skill = SKILL_OF.get(tagger.tag(x['tags'][ui], title))
                 if not skill:
                     continue
                 key = (skill, fname)
                 if key not in files:
-                    files[key] = [f"# {subject} {lec}강 · {x['title']}", '',
+                    files[key] = [f"# {subject}" + (f" {lec}강" if lec else '') + f" · {x['title']}", '',
                                   f"출처 지식트리: {url} (자세한 설명·그림은 여기)", '',
                                   '> 개념은 한 줄 요지만 둔다. 판단·비교 주제만 본문을 남긴다. 근거로 쓰되 정답으로 쓰지 않는다.', '']
                 head = f"### {title}" + (f"  〔{unit}〕" if unit and unit != title else '')
                 files[key] += [head, compact(title, body, gist), '']
-    prefixes = tuple(f"{x['lec']:02d}강-" for x in data)
-    for sk in set(SKILL_OF.values()):  # 이번에 넣는 강의의 옛 파일만 지운다
+    ids = ['claude.ai/artifact/' + x['id'] + ' ' for x in data]
+    for sk in set(SKILL_OF.values()):  # 이번에 넣는 강의의 옛 파일만 지운다 (머리말의 출처 id 로 찾음)
         d = os.path.join(root, sk, 'references', subject)
         if os.path.isdir(d):
             for fn in os.listdir(d):
-                if fn.startswith(prefixes):
-                    os.remove(os.path.join(d, fn))
+                p = os.path.join(d, fn)
+                if any(i in open(p).read(400) for i in ids):
+                    os.remove(p)
     for (skill, fname), lines in files.items():
         d = os.path.join(root, skill, 'references', subject)
         os.makedirs(d, exist_ok=True)
@@ -114,7 +116,8 @@ def links(root):
                         if t and t != sk and t not in targets:
                             targets.append(t)
                     for t in targets[:MAX_SEE]:
-                        inv[t].append(f"- {title} · {subj} {fn[:3]} → `~/.claude/skills/{sk}/references/{subj}/{fn}` — {gist}")
+                        lab = (re.match(r'\d+강', fn) or re.match(r'.{1,20}', fn[:-3])).group(0)
+                        inv[t].append(f"- {title} · {subj} {lab} → `~/.claude/skills/{sk}/references/{subj}/{fn}` — {gist}")
     for sk in skills:
         p = os.path.join(root, sk, 'references', LINKS)
         if not inv[sk]:
