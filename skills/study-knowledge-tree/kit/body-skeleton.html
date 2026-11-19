@@ -1,0 +1,77 @@
+<!-- 이 파일을 복사해 body.html로 쓴다. {{ }} 와 '여기에' 주석 자리만 채운다. id는 엔진이 쓰므로 바꾸지 않는다. -->
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">{{과목}} · {{N}}강 · 시험 대비</div>
+    <h1>{{강의 제목}}</h1>
+    <p class="sub">{{한 문단 소개}}</p>
+    <div class="legend">
+      <span class="item"><span class="bd star">출제</span>핵심 개념</span>
+      <span class="item"><span class="bd trap">함정</span>오답 보기 단골</span>
+      <span class="item"><span class="bd calc">계산</span>계산 문제 소재</span>
+      <!-- 여기에: 과목 전용 표기 설명 한두 개 -->
+    </div>
+  </div>
+</header>
+<nav class="tabs" aria-label="보기 선택">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" data-view="tree" aria-selected="true">지식 트리</button>
+    <button class="tab" role="tab" data-view="compare" aria-selected="false">비교·함정</button>
+    <button class="tab" role="tab" data-view="calc" aria-selected="false">{{공식·계산 연습 또는 그림 해석 연습}}</button>
+    <button class="tab" role="tab" data-view="quiz" aria-selected="false">문제은행<span class="cnt" id="qcount"></span></button>
+  </div>
+</nav>
+<main class="wrap">
+<section class="view" id="view-tree">
+  <div class="sec-head"><h2>시작하기 전에: {{왜 ___이 문제인가}}</h2></div>
+  <div class="card intro"><!-- 여기에: 구체적인 장면 문단 + 인라인 SVG(div.fig-box > svg.fig) + 이 강의가 답하는 질문 목록 --></div>
+  <div class="sec-head"><h2>강의 흐름</h2><p>{{한 줄}}</p></div>
+  <ol class="flow"><li><span class="n">1 · p.2–8</span><span class="t">{{단원}}</span><span class="d">{{한 줄}}</span></li></ol>
+  <div class="sec-head"><h2>먼저 알아 둘 용어</h2></div>
+  <dl class="gloss"><div><dt>{{용어}}<small>{{영문}}</small></dt><dd>{{풀이}}</dd></div></dl>
+  <div class="sec-head"><h2>지식 트리</h2></div>
+  <div class="tree-tools"><button class="btn" id="t-open">모두 펼치기</button><button class="btn" id="t-close">모두 접기</button><button class="btn" id="t-star">출제 포인트만 펼치기</button></div>
+  <ul class="tree" id="tree">
+  <li><details open><summary><span class="nt-root">{{N강 제목}}</span><span class="gist">{{한 줄 요약}}</span></summary>
+  <ul class="tb">
+    <li class="branch"><details open><summary><span class="nt-br">1. {{단원}}</span><span class="pg">p.2–8</span><span class="gist">{{한 줄}}</span></summary>
+    <ul class="tb">
+      <li class="lead"><p>{{단원이 무엇을 하는지 한 문단}}</p></li>
+      <li><details class="topic"><summary><span class="nt-tp">{{주제}}</span><span class="bd star">출제</span><span class="gist">{{한 줄}}</span></summary>
+      <div class="explain">
+        <p>{{쉬운 설명: 왜 필요한가 → 어떻게 동작하나. 처음 나오는 용어는 그 자리에서 풀기}}</p>
+        <div class="box analogy"><span class="lab">비유</span><p>{{일상 비유}}</p></div>
+        <div class="box example"><span class="lab">예시</span><p>{{숫자로 따라가기}}</p></div>
+        <div class="fig-box" data-fig="{{그림키: content.js의 TREE_FIGS}}"></div>
+        <pre class="code"><span class="cm"># 한국어 설명</span>
+code_here()</pre>
+        <div class="box exam"><span class="lab">시험에서는</span><p>{{함정·헷갈리는 반대 진술}}</p></div>
+        <!-- 가끔만: <div class="box career"><span class="lab">취업에서는</span><p>…</p></div> -->
+        <!-- 도구: <div class="tool" id="tool-x"><h4>제목<small>설명</small></h4><div class="ctl"><label for="x-r">이름</label><input type="range" id="x-r"><output id="x-out"></output></div><div class="fig-box" id="x-fig"></div><div class="readout" id="x-read"></div></div> -->
+      </div></details></li>
+    </ul></details></li>
+  </ul></details></li>
+  </ul>
+</section>
+<section class="view" id="view-compare" hidden>
+  <!-- 여기에: 단원 한 표, 개념 비교표(div.tbl-wrap > table), 외울 숫자(div.numbers), 틀린 진술 vs 바른 진술(td.wrong) -->
+</section>
+<section class="view" id="view-calc" hidden>
+  <div class="grid2"><!-- 공식 카드: <div class="card"><h3>이름<small>p.5</small></h3><pre class="code">…</pre><p class="tip">…</p></div> --></div>
+  <div class="card"><h3>종합 그림 문제</h3><div class="fig-box" data-fig="scenario"></div><ol class="steps"><li>{{질문}}</li></ol>
+    <div class="row"><button class="btn" data-reveal="sc-answer" aria-expanded="false">정답 보기</button></div>
+    <div class="fb" id="sc-answer" hidden><ol class="steps"><li>{{정답}}</li></ol></div></div>
+  <div class="card" id="drill"><h3>무작위 연습</h3><p class="tip">유형을 고르면 값이 바뀌는 문제가 계속 나온다.</p>
+    <div class="row" id="drill-kinds"></div><p class="drill-q" id="dq"></p><div class="opts" id="dopts"></div><div class="fb" id="dfb" hidden></div>
+    <div class="row"><button class="btn primary" id="dnext">새 문제</button><span class="score" id="dstat"></span></div></div>
+</section>
+<section class="view" id="view-quiz" hidden>
+  <div class="sec-head"><h2>문제은행</h2><p>숫자키 1–4로 고르고 ← → 로 넘긴다.</p></div>
+  <div class="qtools">
+    <div class="row" id="qtypes"></div>
+    <div class="row"><label class="muted" for="qtopic" style="font-size:13px">주제</label><select id="qtopic"></select>
+      <button class="btn" id="qwrong" aria-pressed="false">틀린 문제만</button><button class="btn" id="qshuffle">순서 섞기</button><button class="btn" id="qreset">기록 지우기</button></div>
+    <p class="score" id="qscore"></p><div class="dots" id="qdots" aria-label="문제 목록"></div>
+  </div>
+  <div class="qcard" id="qcard"></div>
+</section>
+</main>

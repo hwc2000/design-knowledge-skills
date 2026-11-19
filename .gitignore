@@ -1,0 +1,14 @@
+# 강의 정리는 저작권 때문에 내 컴퓨터에만 둔다 (스킬은 그대로 쓰고, 공개만 안 함)
+skills/*/references/
+
+# 지식트리 키트의 예시 중 실제 강의 내용이 들어 있는 것
+skills/study-knowledge-tree/kit/examples/ds16-*
+skills/study-knowledge-tree/reference-template.html
+
+# 백업·캐시
+*.bak*
+__pycache__/
+*.pyc
+
+# 개인 설정 (진로 목표·과목별 선호 등). 스킬은 있으면 읽고, 없으면 기본값으로 동작
+*.local.md
