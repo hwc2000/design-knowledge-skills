@@ -51,6 +51,9 @@ design-replication (나눈 조각을 복제), design-consistency
 - `references/분산처리/07강-Partitioning.md` (주제 38개)
 - `references/분산처리/11강-네이밍-DNS-Service-Discovery.md` (주제 10개)
 
+**인프라**
+- `references/인프라/인프라-설계.md` (주제 1개)
+
 **다른 스킬의 관련 주제** (보조 태그)
-- `references/관련-주제.md` (주제 1개) — 이 스킬 질문에 걸치는 다른 스킬의 주제 링크. 질문이 이 스킬 범위를 넘으면 여기서 찾는다.
+- `references/관련-주제.md` (주제 2개) — 이 스킬 질문에 걸치는 다른 스킬의 주제 링크. 질문이 이 스킬 범위를 넘으면 여기서 찾는다.
 <!-- /INDEX -->

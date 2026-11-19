@@ -50,6 +50,9 @@ design-communication (나눈 뒤 어떻게 주고받나), design-failure (나눈
 - `references/분산처리/05강-Pub-Sub와-이벤트-기반-아키텍처.md` (주제 6개)
 - `references/분산처리/06강-시스템-아키텍처.md` (주제 13개)
 
+**인프라**
+- `references/인프라/인프라-설계.md` (주제 7개)
+
 **다른 스킬의 관련 주제** (보조 태그)
 - `references/관련-주제.md` (주제 1개) — 이 스킬 질문에 걸치는 다른 스킬의 주제 링크. 질문이 이 스킬 범위를 넘으면 여기서 찾는다.
 <!-- /INDEX -->

@@ -34,13 +34,13 @@ SEE=[
  (r'at-most|at-least|exactly-once|전달 보장|멱등|Idempot|재시도|요청 ID',['통신','장애']),
  (r'2f ?\+ ?1|내결함성|장애를 견딘|로그 절단|Truncation',['장애']),
  (r'Kafka',['통신']),
- (r'Read-Your-Writes|내 쓰기|Monotonic|단조|[Ss]tale|오래된 읽기|Follower Reads|팔로워 읽기|세션 보장|버전 토큰|Session Stickiness',['일관성','복제']),
+ (r'Read-Your-Writes|내 쓰기|Monotonic|단조|Stale Read|오래된 읽기|Follower Reads|팔로워 읽기|세션 보장|버전 토큰|Session Stickiness',['일관성','복제']),
  (r'Eventual|최종 일관',['일관성']),
  (r'MVCC|스냅샷|닫힌 타임스탬프|Closed Timestamp|TrueTime|외부 일관성',['일관성','순서']),
  (r'Linearizab',['조정']),
  (r'Vector Clock|Version Vector|Lamport|HLC|논리 시계|happened-before',['순서']),
  (r'백프레셔|Backpressure|흐름 제어|완충',['성능']),
- (r'파이프라이닝|파이프라인(?! \(PUSH)|Pipeline|배칭',['성능']),  # ZeroMQ PUSH/PULL 패턴은 성능 기법이 아님
+ (r'파이프라이닝|(?<!관측 )파이프라인(?! \(PUSH)|Pipeline|배칭',['성능']),  # ZeroMQ PUSH/PULL 패턴은 성능 기법이 아님
  (r'Replication|복제',['복제']),
  (r'Partitioning|파티션|샤딩|Sharding',['분할']),
  (r'ZooKeeper|etcd|Lease|리스\(|분산 락|락 기반|상호 배제',['조정']),
@@ -48,6 +48,16 @@ SEE=[
  (r'SPOF|단일 실패점',['구조','장애']),
  (r'Service Discovery|DNS',['찾기']),
  (r'CRDT|LWW|충돌 해소|병합',['충돌']),
+ # 인프라 계열 낱말 (2026-11-19). 분산처리 주제와 낱말이 달라도 같은 질문으로 잇는다
+ (r'재해|GSLB|DR\)',['장애','복제']),
+ (r'이중화',['장애']),  # 전원·NIC·스위치 이중화는 데이터 복제가 아니다
+ (r'로드밸런|부하분산|부하 분산|L4 ?/ ?L7|Scale-?(out|up)|Scalab|확장|오토스케일|Stateless|세션 유지',['확장']),
+ (r'헬스체크|Health ?[Cc]heck',['장애','확장']),
+ (r'캐시|Cache|캐싱과|CDN|TTL|히트율',['성능','일관성']),  # '응답 캐싱'(멱등 수신자)은 캐시 설계가 아니다
+ (r'모니터링|관측|Observab|알림 룰|메트릭|로그로|감사 로그',['관측']),
+ (r'장애 주입|Chaos',['장애','관측']),
+ (r'배포|Deploy|롤링|블루-그린|카나리|IaC|Terraform|Ansible|컨테이너|가상화',['배포']),
+ (r'보안|인증|IAM|TLS|암호화|방화벽|DMZ|시크릿|Secret|최소 권한|공격 표면',['보안']),
 ]
 def extras(title):
     """주제 이름 → 보조 태그 후보(순서대로, 중복 없이). 주 태그 제외·개수 제한은 build_skills 에서."""
@@ -56,8 +66,9 @@ def extras(title):
         if re.search(pat,title):
             out+=[t for t in tgs if t not in out]
     return out
-def tag(unit_tag,t):
-    """unit_tag: 이 주제가 속한 단원의 기본 태그 (과목 설정의 tags[단원 순서])."""
+def tag(unit_tag,t,topic_tags=None):
+    """우선순위: 과목 설정의 topic_tags(주제 이름 그대로, 그 강의에만) > OV(모든 과목) > 단원 기본 태그."""
+    if topic_tags and t in topic_tags: return topic_tags[t]
     for pat,tg in OV:
         if re.search(pat,t): return tg
     return unit_tag

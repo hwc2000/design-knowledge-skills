@@ -21,6 +21,7 @@ SKILL_OF = {
     '분할': 'design-partitioning', '찾기': 'design-partitioning', '일관성': 'design-consistency',
     '복제': 'design-replication', '충돌': 'design-conflict-ordering', '순서': 'design-conflict-ordering',
     '조정': 'design-coordination', '장애': 'design-failure',
+    '확장': 'design-scaling', '배포': 'design-deployment', '관측': 'design-observability', '보안': 'design-security',
 }
 
 def slug(s):
@@ -62,7 +63,7 @@ def build(data, subject, root):
                 title, body = tp[0], tp[1]
                 gist = tp[2] if len(tp) > 2 else ''
                 title = clean(title)
-                skill = SKILL_OF.get(tagger.tag(x['tags'][ui], title))
+                skill = SKILL_OF.get(tagger.tag(x['tags'][ui], title, x.get('topic_tags')))
                 if not skill:
                     continue
                 key = (skill, fname)

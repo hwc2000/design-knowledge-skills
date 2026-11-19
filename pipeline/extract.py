@@ -39,8 +39,29 @@ def h2chunks(r):
 def has(r,c): return next(r.find(lambda n: c in n.cls),None) is not None
 def first(n,pred): return next(n.find(pred),None)
 def cl(c): return lambda n: c in n.cls
+def extract_weeks(r):
+    """주차 탭 형식(div.wk[data-wk] 안에 section.branch, 하위 div.sub): 주차 = 단원, branch·sub = 주제. 예상 문제(quiz)는 뺀다."""
+    navs={n.a.get('data-wk'):n for n in r.find(lambda n:n.tag=='nav' and 'map-tree' in n.cls)}
+    units=[]
+    for w in r.find(lambda n:n.tag=='div' and 'wk' in n.cls and n.a.get('data-wk')):
+        k=w.a['data-wk']; root=first(navs[k],cl('root')) if k in navs else None
+        name=f"W{k} "+re.sub(r'^w\d+/\s*','',txt(root)) if root else f"W{k}"
+        topics=[]
+        for sec in w.find(lambda n:n.tag=='section' and 'branch' in n.cls):
+            if sec.a.get('id','').endswith('quiz'): continue
+            h2=first(sec,lambda n:n.tag=='h2'); g=first(sec,cl('gist'))
+            bt=txt(h2) if h2 else ''
+            subs=list(sec.find(cl('sub')))
+            main=txt(sec,drop=('sub','bh'))
+            if not subs or len(main)>80: topics.append((bt,main,txt(g) if g else ''))
+            for sb in subs:
+                h3=first(sb,lambda n:n.tag=='h3')
+                topics.append((bt+' · '+txt(h3),txt(sb,drop=('bh',)),''))
+        units.append((name,topics))
+    return units
 def extract(r):
     units=[]
+    if first(r,lambda n:n.tag=='div' and 'wk' in n.cls and n.a.get('data-wk')): return extract_weeks(r)
     if has(r,'nt-br'):
         for b in r.find(cl('branch')):
             u=first(b,cl('nt-br')); 
@@ -81,7 +102,7 @@ for i, L in enumerate(CFG['lectures']):
     h1=first(r,lambda n:n.tag=='h1')
     units=extract(r)
     if len(units)!=len(L['tags']): bad.append(f"{title}: 단원 {len(units)}개인데 tags {len(L['tags'])}개")
-    res.append({'subject':CFG['subject'],'order':i+1,'lec':L.get('lec'),'id':L['id'],'title':title,'h1':txt(h1) if h1 else title,'units':units,'tags':L['tags']})
+    res.append({'subject':CFG['subject'],'order':i+1,'lec':L.get('lec'),'id':L['id'],'title':title,'h1':txt(h1) if h1 else title,'units':units,'tags':L['tags'],'topic_tags':L.get('topic_tags',{})})
 json.dump(res,open(sys.argv[3],'w'),ensure_ascii=False,indent=1)
 for x in res: print(x['title'][:30], '단원',len(x['units']), '주제',sum(len(t) for _,t in x['units']), '본문자수',sum(len(tp[1]) for _,ts in x['units'] for tp in ts), '빈본문',sum(1 for _,ts in x['units'] for tp in ts if len(tp[1])<40))
 if bad: sys.exit('PROBLEM 단원 수와 tags 수가 다르다:\n' + '\n'.join(bad))
